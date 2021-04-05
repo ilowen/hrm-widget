@@ -1,0 +1,496 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tadpoles</title>
+
+    <script type="text/javascript" src="paper-full.js"></script>
+
+    <script type="text/javascript" >
+        // Adapted from Flocking Processing example by Daniel Schiffman:
+        // http://processing.org/learning/topics/flocking.html
+        window.onload = function() {
+
+          start();
+        };
+
+        function timeout(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function declOfNum(number, titles) {
+            cases = [2, 0, 1, 1, 1, 2];
+            return `${number} ${titles[ (number%100>4 && number%100<20)? 2 : cases[(number%10<5)?number%10:5] ]}`;
+        }
+        activeScene={};
+        async function start(){
+          let auctionView =document.getElementById('auctionView');
+          var canvas = document.getElementById('canvas');
+          paper.setup(canvas)
+
+          with(paper){
+
+
+            var Boid = Base.extend({
+                initialize: function(position, maxSpeed, maxForce) {
+
+                    var strength = Math.random() * 0.5;
+                    this.acceleration = new Point();
+                    this.vector = Point.random().multiply(1.5).subtract(1);
+                    this.position = position.clone();
+                    this.radius = 30;
+                    this.maxSpeed = maxSpeed + strength;
+                    this.maxForce = maxForce + strength;
+                    this.amount = strength * 10 + 10;
+                    this.count = 0;
+                    this.createItems();
+                },
+
+                run: function(boids, groupTogether) {
+
+                    this.lastLoc = this.position.clone();
+                    if (!groupTogether) {
+                        this.flock(boids);
+                    } else {
+                        this.align(boids);
+                    }
+
+                    this.borders();
+                    this.update();
+                    this.calculateTail();
+                    this.moveHead();
+                },
+
+                calculateTail: function() {
+
+                    var segments = this.path.segments,
+                        shortSegments = this.shortPath.segments;
+                    var speed = this.vector.length;
+                    var pieceLength = 5 + speed / 3;
+                    if(speed>1){
+                      this.head.fillColor="white";
+                      this.head.size=[13, 8];
+                      this.path.opacity=0.5;
+                    }
+                    else{
+                      this.head.fillColor="white";
+                      this.head.size=[16, 8];
+                      this.path.opacity=0;
+                    }
+                    var point = this.position;
+                    segments[0].point = shortSegments[0].point = point;
+                    // Chain goes the other way than the movement
+                    var lastVector = this.vector.multiply(-1);
+                    for (var i = 1; i < this.amount; i++) {
+                        var vector = segments[i].point.subtract(point);
+                        this.count += speed * 10;
+                        var wave = Math.sin((this.count + i * 3) / 300);
+                        var sway = lastVector.rotate(90).normalize(wave);
+                        point = point.add(lastVector.normalize(pieceLength)).add(sway);
+                        segments[i].point = point;
+                        if (i < 3)
+                            shortSegments[i].point = point;
+                        lastVector = vector;
+                    }
+                    this.path.smooth();
+                },
+
+                createItems: function() {
+                    this.head = new Shape.Ellipse({
+                        center: [0, 0],
+                        size: [13, 8],
+                        fillColor: 'white',
+                        opacity: 0.5
+                    });
+
+                    this.path = new Path({
+                        strokeColor: 'white',
+                        strokeWidth: 2,
+                        strokeCap: 'round',
+                        opacity: 0.5
+                    });
+                    for (var i = 0; i < this.amount; i++)
+                        this.path.add(new Point());
+
+                    this.shortPath = new Path({
+                        strokeColor: 'white',
+                        strokeWidth: 4,
+                        strokeCap: 'round',
+                        opacity: 0.5
+                    });
+                    for (var i = 0; i < Math.min(3, this.amount); i++)
+                        this.shortPath.add(new Point());
+
+
+                },
+
+                moveHead: function() {
+                    this.head.position = this.position;
+                    this.head.rotation = this.vector.angle;
+                },
+
+                // We accumulate a new acceleration each time based on three rules
+                flock: function(boids) {
+                    var separation = this.separate(boids).multiply(3);
+                    var alignment = this.align(boids);
+                    var cohesion = this.cohesion(boids);
+
+                    this.acceleration = this.acceleration.add(separation);
+                    this.acceleration = this.acceleration.add(alignment);
+                    this.acceleration = this.acceleration.add(cohesion);
+                    //this.acceleration += separation + alignment + cohesion;
+                },
+
+                update: function() {
+                    // Update velocity
+                    this.vector = this.vector.add(this.acceleration);
+                    // Limit speed (vector#limit?)
+                    this.vector.length = Math.min(this.maxSpeed, this.vector.length);
+                    this.position = this.position.add(this.vector);
+                    // Reset acceleration to 0 each cycle
+                    this.acceleration = new Point();
+                },
+
+                seek: function(target) {
+                    this.acceleration = this.acceleration.add(this.steer(target, false));
+                },
+
+                arrive: function(target) {
+                    this.acceleration = this.acceleration.add(this.steer(target, true));
+                },
+
+                borders: function() {
+                    var vector = new Point();
+                    var position = this.position;
+                    var radius = this.radius;
+                    var size = view.size;
+                    if (position.x < -radius) vector.x = size.width + radius;
+                    if (position.y < -radius) vector.y = size.height + radius;
+                    if (position.x > size.width + radius) vector.x = -size.width -radius;
+                    if (position.y > size.height + radius) vector.y = -size.height -radius;
+                    if (!vector.isZero()) {
+                        this.position = this.position.add(vector);
+                        var segments = this.path.segments;
+                        for (var i = 0; i < this.amount; i++) {
+                            segments[i].point = segments[i].point.add(vector);
+                        }
+                    }
+                },
+
+                // A method that calculates a steering vector towards a target
+                // Takes a second argument, if true, it slows down as it approaches
+                // the target
+                steer: function(target, slowdown) {
+                    var steer,
+                        desired = target.subtract(this.position);
+                    var distance = desired.length;
+                    // Two options for desired vector magnitude
+                    // (1 -- based on distance, 2 -- maxSpeed)
+                    if (slowdown && distance < 100) {
+                        // This damping is somewhat arbitrary:
+                        desired.length = this.maxSpeed * (distance / 100);
+                    } else {
+                        desired.length = this.maxSpeed;
+                    }
+                    steer = desired.subtract(this.vector);
+                    steer.length = Math.min(this.maxForce, steer.length);
+                    return steer;
+                },
+
+                separate: function(boids) {
+                    var desiredSeperation = 60;
+                    var steer = new Point();
+                    var count = 0;
+                    // For every boid in the system, check if it's too close
+                    for (var i = 0, l = boids.length; i < l; i++) {
+                        var other = boids[i];
+                        var vector = this.position.subtract(other.position);
+                        var distance = vector.length;
+                        if (distance > 0 && distance < desiredSeperation) {
+                            // Calculate vector pointing away from neighbor
+                            steer = steer.add(vector.normalize(1 / distance));
+                            count++;
+                        }
+                    }
+                    // Average -- divide by how many
+                    if (count > 0)
+                        steer = steer.divide(count);
+                    if (!steer.isZero()) {
+                        // Implement Reynolds: Steering = Desired - Velocity
+                        steer.length = this.maxSpeed;
+                        steer = steer.subtract(this.vector);
+                        steer.length = Math.min(steer.length, this.maxForce);
+                    }
+                    return steer;
+                },
+
+                // Alignment
+                // For every nearby boid in the system, calculate the average velocity
+                align: function(boids) {
+                    var neighborDist = 50;
+                    var steer = new Point();
+                    var count = 0;
+                    for (var i = 0, l = boids.length; i < l; i++) {
+                        var other = boids[i];
+                        var distance = this.position.getDistance(other.position);
+                        if (distance > 0 && distance < neighborDist) {
+                            steer = steer.add(other.vector);
+                            count++;
+                        }
+                    }
+
+                    if (count > 0)
+                        steer = steer.multiply(count);
+                    if (!steer.isZero()) {
+                        // Implement Reynolds: Steering = Desired - Velocity
+                        steer.length = this.maxSpeed;
+                        steer = steer.subtract(this.vector);
+                        steer.length = Math.min(steer.length, this.maxForce);
+                    }
+                    return steer;
+                },
+
+                // Cohesion
+                // For the average location (i.e. center) of all nearby boids,
+                // calculate steering vector towards that location
+                cohesion: function(boids) {
+                    var neighborDist = 200;
+                    var sum = new Point();
+                    var count = 0;
+                    for (var i = 0, l = boids.length; i < l; i++) {
+                        var other = boids[i];
+                        var distance = this.position.getDistance(other.position);
+                        if (distance > 0 && distance < neighborDist) {
+                            sum = sum.add(other.position); // Add location
+                            count++;
+                        }
+                    }
+                    if (count > 0) {
+                        sum = sum.divide(count);
+                        // Steer towards the location
+                        return this.steer(sum, false);
+                    }
+                    return sum;
+                }
+            });
+            function importSVG(url) {
+              return new Promise(resolve => {
+                project.importSVG(url,function(item){
+                    resolve(item);
+                 });
+              });
+            };
+
+
+            let boids = [];
+            let boidsTotal=150;
+
+
+            let scenes={
+              'Heart':'heart.svg'
+            }
+
+
+
+            for (var name in scenes) {
+              let data = await importSVG(scenes[name]);
+              data.position = view.center
+              data.position.y =300;
+              data.scale(0.5);
+              let pathes = data.getItems().map(item => item instanceof Shape?item.toPath():item);
+
+
+
+              pathes = pathes.filter(item => item instanceof Path);
+              let background=pathes.shift();
+            //  background.fillColor = "black";
+            //  background.opacity=0.4;
+
+
+              data.visible=false
+
+
+              let totalLength=pathes.map(path => path.length).reduce((a, b) =>  a + b)
+              let lengthByBoid = totalLength/boidsTotal;
+              scenes[name] ={
+                name,
+                pathes,
+                background,
+                totalLength,
+                lengthByBoid,
+                data
+              }
+
+            }
+
+            let showBoids = (new URL(window.location)).searchParams.get("showBoids");
+            if(showBoids)
+              for (var i = 0; i < boidsTotal; i++) {
+                var position = Point.random().multiply(view.size);
+                      boids.push(new Boid(position, 10, 0.05));
+              }
+
+
+            activeScene = scenes.Heart;
+
+            activeScene.data.visible=true;
+
+
+              view.onFrame = function onFrame(event) {
+
+
+
+                if(!showBoids)
+                  return false;
+
+                if(activeScene){
+
+                  let boidIndex = 0;
+
+                  activeScene.pathes.forEach(
+                    (path,index) =>{
+                      let boidscount = path.length/activeScene.lengthByBoid|0;
+
+                      for (var i = boidIndex, l = boidIndex+boidscount; i < l; i++) {
+                          var length = ((i + event.count / 60) % boidscount) / boidscount * path.length;
+                          var point = path.getPointAt(length);
+
+                          if (point)
+                              boids[i].arrive(point);
+                          boids[i].run(boids,true);
+                      }
+                      boidIndex = boidscount+boidIndex
+
+                      if(index===activeScene.pathes.length-1 && l<boids.length){
+
+                        for (var i = l, l1 = boids.length; i < l1; i++) {
+                            boids[i].run(boids,false);
+                        }
+
+                      }
+
+                    });
+                }else{
+                    for (var i = 0, l = boids.length; i < l; i++) {
+                        boids[i].run(boids,false);
+                    }
+                };
+
+
+              }
+
+            // Reposition the heart path whenever the window is resized:
+            view.onResize = function onResize(event) {
+                //heartPath.fitBounds(view.bounds);
+              //  heartPath.scale(0.8);
+            }
+
+
+
+            view.onKeyDown = function onKeyDown(event) {
+                if (event.key == 'space') {
+                    var layer = project.activeLayer;
+                    layer.selected = !layer.selected;
+                    return false;
+                }
+            }
+
+            const socket = new WebSocket(`ws://${location.hostname}:8080`);
+            var  beat = 5000;
+            var rate = 60;
+            // Connection opened
+            socket.addEventListener('open', function (event) {
+              socket.send('Hello Server!');
+
+            });
+
+            // Listen for messages
+            socket.addEventListener('message',async function (event) {
+
+              //console.log('Message from server ', event.data);
+              try{
+                let data = JSON.parse(event.data);
+                data = JSON.parse(data);
+
+                beat=data.heart.interval
+                rate=data.heart.rate
+                audiohbeat.volume=rate/220||0;
+                audiohbeat.playbackRate=rate/60||1;
+                activeScene.data.children.Rate.content=rate;
+              }catch(e){
+                  console.error(e)
+              }
+
+
+            });
+            activeScene.data.children.Rate.fontFamily= 'Arial';
+            //AUDIO
+            audiohbeat = document.createElement("AUDIO");
+            audiohbeat.setAttribute("src","HB60.mp3");
+            audiohbeat.loop = true;
+            audiohbeat.volume=0;
+            audiohbeat.play();
+            audiohbeat.playbackRate=1;
+            //x.setAttribute("controls", "controls");
+          //  document.body.appendChild(x);
+          function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+          }
+            while(1){
+              //scale=rate/600;
+              scale=sigmoid(60/rate)/0.7310585786300049||1;
+              //console.log(scale,rate);
+              activeScene.data.scale(scale)
+
+              await timeout(beat/2)
+              activeScene.data.scale(1/scale)
+              await timeout(beat/2)
+            }
+
+          }
+
+        }
+    </script>
+
+
+
+
+    <style>
+      @font-face {
+       font-family: "Galiver";
+       src: url("/src/css/galiver.ttf")
+      }
+        body {
+          background: #00ff00;
+            overflow: hidden;
+        }
+         canvas[resize] {
+           position: absolute;
+            width: 100%;
+
+            height: 100%;
+        }
+        #auctionView{
+          background: rgba(0, 0, 0, 0.6);
+          font-family: Galiver;
+          color: white;
+          padding: 20px;
+          width: 300px;
+          text-shadow: 0 0 5px black;
+          letter-spacing: 1.5;
+        }
+        h2,h3{
+          color:#f75d00;
+
+        }
+
+        i{
+          color:rgba(255, 255, 255, 0.7);
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="canvas" resize></canvas>
+    <div style='display:none;'  id = "auctionView"></div>
+</body>
+</html>

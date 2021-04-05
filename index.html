@@ -4,7 +4,7 @@
     <title>Tadpoles</title>
 
     <script type="text/javascript" src="paper-full.js"></script>
-
+    <script src="howler.core.min.js"></script>
     <script type="text/javascript" >
         // Adapted from Flocking Processing example by Daniel Schiffman:
         // http://processing.org/learning/topics/flocking.html
@@ -411,10 +411,10 @@
                 let data = JSON.parse(event.data);
                 data = JSON.parse(data);
 
-                beat=data.heart.interval
-                rate=data.heart.rate
-                audiohbeat.volume=rate/220||0;
-                audiohbeat.playbackRate=rate/60||1;
+                beat=data.heart.interval;
+                rate=data.heart.rate;
+                audiohbeat.volume(rate/220||0);
+                audiohbeat.rate(rate/60||1);
                 activeScene.data.children.Rate.content=rate;
               }catch(e){
                   console.error(e)
@@ -424,13 +424,16 @@
             });
             activeScene.data.children.Rate.fontFamily= 'Arial';
             //AUDIO
-            audiohbeat = document.createElement("AUDIO");
-            audiohbeat.setAttribute("type","audio/wav");
-            audiohbeat.setAttribute("src","HB60.wav");
-            audiohbeat.loop = true;
-            audiohbeat.volume=0;
-            audiohbeat.play();
-            audiohbeat.playbackRate=1;
+            var audiohbeat = new Howl({
+              src: ['HB60.mp3'],
+              autoplay: true,
+               loop: true,
+               volume: 0,
+               rate:1
+            });
+
+            //sound.play();
+
             //x.setAttribute("controls", "controls");
           //  document.body.appendChild(x);
           function sigmoid(z) {

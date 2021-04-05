@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 
 
-const wss = new webSocket.Server({ port: 8080 });
+const wss = new webSocket.Server({ port: PORT });
 
 
 

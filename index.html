@@ -393,8 +393,8 @@
                     return false;
                 }
             }
-
-            const socket = new WebSocket(`ws://${location.hostname}:8080`);
+            var HOST = location.origin.replace(/^http/, 'ws');
+            const socket = new WebSocket(HOST);
             var  beat = 5000;
             var rate = 60;
             // Connection opened

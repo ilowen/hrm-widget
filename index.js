@@ -1,14 +1,19 @@
-const serve = require('koa-static');
-const Koa = require('koa');
-const webSocket = require('ws');
-const app = new Koa();
+const express = require('express');
+const { Server } = require('ws');
 
 const PORT = process.env.PORT || 3000;
+const INDEX = '/index.html';
+
+const server = express();
+
+server.use(express.static(__dirname));
+
+server.use("/", (req, res) => res.sendFile(INDEX, { root: __dirname }));
+
+server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 
-
-const wss = new webSocket.Server({ port: PORT });
-
+const wss = new Server({ server });
 
 
 wss.broadcast = function broadcast(data) {
@@ -26,18 +31,4 @@ wss.on('connection', function connection(ws) {
   });
 
   ws.send(JSON.stringify({type:'speech',text:'Привет Ебты с сервера!'}));
-});
-
-// $ GET /package.json
-app.use(serve('.'));
-
-// $ GET /hello.txt
-app.use(serve('test/fixtures'));
-
-// or use absolute paths
-app.use(serve(__dirname + '/src/'));
-
-app.listen(PORT, err => {
-    if(err) throw err;
-    console.log("%c Server running", "color: green");
 });

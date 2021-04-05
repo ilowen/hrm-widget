@@ -23,7 +23,7 @@ httpServer.listen(port);
 
 wss.broadcast = function broadcast(data) {
   wss.clients.forEach(function each(client) {
-    if (client.readyState === webSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(data));
     }
   });

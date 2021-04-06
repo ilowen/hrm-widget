@@ -414,6 +414,7 @@
 
                 beat=data.heart.interval;
                 rate=data.heart.rate;
+                rate=rate<=0?60:rate;
                 audiohbeat.volume(rate/220||0);
                 audiohbeat.rate(rate/60||1);
                 activeScene.data.children.Rate.content=rate;

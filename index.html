@@ -443,8 +443,9 @@
           }
             while(1){
               //scale=rate/600;
-              scale=sigmoid(60/rate)/0.7310585786300049||1;
+              //scale=sigmoid(60/rate)/0.7310585786300049||1;
               //console.log(scale,rate);
+              scale=0.95;
               activeScene.data.scale(scale)
 
               await timeout(beat/2)

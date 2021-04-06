@@ -282,7 +282,8 @@
 
 
             let boids = [];
-            let boidsTotal=150;
+
+            let boidsTotal=parseInt((new URL(window.location)).searchParams.get("showBoids"))||0;
 
 
             let scenes={

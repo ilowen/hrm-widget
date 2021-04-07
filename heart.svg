@@ -11,7 +11,6 @@
 	.st3{font-family:'Arial-BoldMT';}
 	.st4{font-size:136.1348px;}
 	.st5{font-size:120px;}
-	.st6{font-size:100px;}
 </style>
 <path class="st0" d="M784.2,7.8c-32,0-58.2,14.7-75.8,36.9c-17.6,22.1-26.9,51.6-26.9,82c0,50.7,32.6,97.7,69.5,137.1
 	s78.8,71.5,98.9,90.2c2.9,2.7,7.8,2.7,10.7,0c20.1-18.7,62.1-50.8,99-90.2s69.5-86.4,69.5-137.1c0-30.4-9.3-59.9-26.9-82
@@ -23,7 +22,6 @@
 	s-4.1-8.4-8.6-8.3h-77.2c-3.2-0.1-6.3,1.8-7.6,4.6l-26,51L829.2,78.3C827.7,75,823.9,72.9,820.3,73.3L820.3,73.3z"/>
 <path class="st1" d="M736.1,144.4c-4.4,0.2-8.3,4.4-8,8.7c0.2,4.4,4.4,8.2,8.8,7.9h4.3c4.5,0.1,8.6-3.9,8.6-8.3s-4.1-8.4-8.6-8.3
 	C739.5,144.4,737.7,144.4,736.1,144.4L736.1,144.4z"/>
-<text id="Rate" transform="matrix(0.9841 0 0 1 991.9922 356.4761)" class="st2 st3 st4">XXX</text>
-<text id="stepStatus" transform="matrix(0.9841 0 0 1 634.1348 356.0249)" class="st2 st3 st5">X</text>
-<text id="cumulativeTotalStepCount" transform="matrix(0.9841 0 0 1 640.1348 484.0249)" class="st2 st3 st6">X</text>
+<text id="Rate" transform="matrix(0.9841 0 0 1 1044.9922 114.4761)" class="st2 st3 st4">XXX</text>
+<text id="stepStatus" transform="matrix(0.9841 0 0 1 964.1348 356.0249)" class="st2 st3 st5">X</text>
 </svg>

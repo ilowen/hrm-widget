@@ -410,7 +410,7 @@
             });
             // Listen for messages
             socket.addEventListener('message',async function (event) {
-
+              //"{\"pedometer\":{\"stepStatus\":\"NOT_MOVING\",\"cumulativeTotalStepCount\":52},\"timestamp\":1617797909827}"
               //console.log('Message from server ', event.data);
               try{
                 let data = JSON.parse(event.data);
@@ -439,7 +439,8 @@
             });
 
             //sound.play();
-
+              activeScene.data.children.stepStatus.content="🏃";
+              //🧍‍♂️🚶🦶
             //x.setAttribute("controls", "controls");
           //  document.body.appendChild(x);
           function sigmoid(z) {

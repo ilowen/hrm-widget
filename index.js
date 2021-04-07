@@ -37,15 +37,21 @@ wss.on('connection', function connection(ws) {
 
   ws.on('message', function incoming(message) {
     let data = JSON.parse(message);
-    if(data.myId&&data.duid)
-      WIDGETS[data.duid]=data.myId;
+    if(data.myId&&data.duid){
+      if (!WIDGETS[data.duid])
+        WIDGETS[data.duid]=[]
+      WIDGETS[data.duid].push(data.myId)
+    }
+
     if(data.duid){
-      if(!WIDGETS[data.duid])
+      if(!WIDGETS[data.duid].length)
         return false;
-      let client =CLIENTS[WIDGETS[data.duid]];
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(data));
-      }
+      WIDGETS[data.duid].forEach(clienId => {
+        let client = CLIENTS[clienId];
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      }) 
     }
 
     console.log('received: %s', message);

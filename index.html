@@ -415,13 +415,21 @@
               try{
                 let data = JSON.parse(event.data);
                 data = JSON.parse(data);
-
-                beat=data.heart.interval;
-                rate=data.heart.rate;
-                rate=rate<=0?60:rate;
-                audiohbeat.volume(rate/220||0);
-                audiohbeat.rate(rate/60||1);
-                activeScene.data.children.Rate.content=rate;
+                if (data.pedometer){
+                    if(data.pedometer.stepStatus == "NOT_MOVING" || data.pedometer.stepStatus == "UNKNOWN")
+                      activeScene.data.children.stepStatus.content='';
+                    else {
+                      activeScene.data.children.stepStatus.content =(data.pedometer.stepStatus=="WALKING"?"🚶":"🏃")+" "+data.pedometer.cumulativeTotalStepCount;
+                    }
+                };
+                if (data.heart){
+                  beat=data.heart.interval;
+                  rate=data.heart.rate;
+                  rate=rate<=0?60:rate;
+                  audiohbeat.volume(rate/220||0);
+                  audiohbeat.rate(rate/60||1);
+                  activeScene.data.children.Rate.content=rate;
+                };
               }catch(e){
                   console.error(e)
               }
@@ -439,7 +447,7 @@
             });
 
             //sound.play();
-              activeScene.data.children.stepStatus.content="🏃🚶";
+              activeScene.data.children.stepStatus.content="";
 
               //🧍‍♂️🚶🦶
             //x.setAttribute("controls", "controls");
@@ -478,7 +486,7 @@
         }
          canvas[resize] {
            position: absolute;
-            width: 340px;
+            width: 380px;
 
             height: 340px;
         }

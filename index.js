@@ -13,7 +13,9 @@ app.use(express.static(__dirname));
 
 app.use("/", (req, res) => res.sendFile(INDEX, { root: __dirname }));
 
-
+CLIENTS = [];
+WIDGETS = {};
+connectionIDCounter = 0;
 
 
 const wss = new WebSocket.Server({
@@ -30,10 +32,24 @@ wss.broadcast = function broadcast(data) {
 };
 
 wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
-    wss.broadcast(message);
-  });
+  CLIENTS.push(ws);
+  CLIENTS.forEach((client,id)=>client.send(JSON.stringify({yourId: id })));
 
-  ws.send(JSON.stringify({type:'speech',text:'Привет Ебты с сервера!'}));
+  ws.on('message', function incoming(message) {
+    let data = JSON.parse(message);
+    if(data.myId&&data.duid)
+      WIDGETS[data.duid]=data.myId;
+    if(data.duid){
+      let client =CLIENTS[WIDGETS[data.duid]];
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(data));
+      }
+    }
+
+    console.log('received: %s', message);
+    //  wss.broadcast(message);
+  });
+  ws.on("close", function close(data,) {
+       console.log("Disconnected",data);
+   });
 });

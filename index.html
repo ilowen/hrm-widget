@@ -395,26 +395,29 @@
                     return false;
                 }
             }
+
+            let duid=parseInt((new URL(window.location)).searchParams.get("duid"))||0;
             var HOST = location.origin.replace(/^http/, 'ws');
             const socket = new ReconnectingWebSocket(HOST);
             var  beat = 5000;
             var rate = 60;
             // Connection opened
             socket.addEventListener('open', function (event) {
-              socket.send('{name:"hrm-widget"}');
+
 
             });
-            socket.addEventListener('onclose', function (event) {
-              socket.send('{name:"hrm-widget"}');
 
-            });
             // Listen for messages
             socket.addEventListener('message',async function (event) {
               //"{\"pedometer\":{\"stepStatus\":\"NOT_MOVING\",\"cumulativeTotalStepCount\":52},\"timestamp\":1617797909827}"
               //console.log('Message from server ', event.data);
               try{
                 let data = JSON.parse(event.data);
-                data = JSON.parse(data);
+
+                
+
+                if(data.yourId)
+                  socket.send(JSON.stringify({myId: data.yourId, duid}));
                 if (data.pedometer){
                     if(data.pedometer.stepStatus == "NOT_MOVING" || data.pedometer.stepStatus == "UNKNOWN")
                       activeScene.data.children.stepStatus.content='';

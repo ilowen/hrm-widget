@@ -4,6 +4,7 @@
     <title>Tadpoles</title>
 
     <script type="text/javascript" src="paper-full.js"></script>
+    <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
     <script src="howler.core.min.js"></script>
     <script type="text/javascript" >
         // Adapted from Flocking Processing example by Daniel Schiffman:
@@ -395,15 +396,18 @@
                 }
             }
             var HOST = location.origin.replace(/^http/, 'ws');
-            const socket = new WebSocket(HOST);
+            const socket = new ReconnectingWebSocket(HOST);
             var  beat = 5000;
             var rate = 60;
             // Connection opened
             socket.addEventListener('open', function (event) {
-              socket.send('Hello Server!');
+              socket.send('{name:"hrm-widget"}');
 
             });
+            socket.addEventListener('onclose', function (event) {
+              socket.send('{name:"hrm-widget"}');
 
+            });
             // Listen for messages
             socket.addEventListener('message',async function (event) {
 

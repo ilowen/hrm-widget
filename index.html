@@ -419,7 +419,7 @@
                     if(data.pedometer.stepStatus == "NOT_MOVING" || data.pedometer.stepStatus == "UNKNOWN")
                       activeScene.data.children.stepStatus.content='';
                     else {
-                      activeScene.data.children.stepStatus.content =(data.pedometer.stepStatus=="WALKING"?"🚶":"🏃")+" "+data.pedometer.cumulativeTotalStepCount;
+                      activeScene.data.children.stepStatus.content =(data.pedometer.stepStatus=="WALKING"?"🚶":"🏃")+data.pedometer.cumulativeTotalStepCount;
                     }
                 };
                 if (data.heart){

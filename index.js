@@ -40,6 +40,8 @@ wss.on('connection', function connection(ws) {
     if(data.myId&&data.duid)
       WIDGETS[data.duid]=data.myId;
     if(data.duid){
+      if(!WIDGETS[data.duid])
+        return false;
       let client =CLIENTS[WIDGETS[data.duid]];
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(data));

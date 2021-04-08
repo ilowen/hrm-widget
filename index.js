@@ -44,14 +44,14 @@ wss.on('connection', function connection(ws) {
     }
 
     if(data.duid){
-      if(!WIDGETS[data.duid].length)
+      if(!WIDGETS[data.duid]||!WIDGETS[data.duid].length)
         return false;
       WIDGETS[data.duid].forEach(clienId => {
         let client = CLIENTS[clienId];
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify(data));
         }
-      }) 
+      })
     }
 
     console.log('received: %s', message);

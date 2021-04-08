@@ -40,7 +40,8 @@ wss.on('connection', function connection(ws) {
     if(data.myId&&data.duid){
       if (!WIDGETS[data.duid])
         WIDGETS[data.duid]=[]
-      WIDGETS[data.duid].push(data.myId)
+      WIDGETS[data.duid].push(data.myId);
+      console.log('received: %s', message);
     }
 
     if(data.duid){
@@ -54,7 +55,7 @@ wss.on('connection', function connection(ws) {
       })
     }
 
-    console.log('received: %s', message);
+  //  console.log('received: %s', message);
     //  wss.broadcast(message);
   });
   ws.on("close", function close(data,) {

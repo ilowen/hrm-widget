@@ -1,1 +1,115 @@
-TEST
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>KS S18 Speed Widget</title>
+
+<script src="reconnecting-websocket.min.js"></script>
+
+<style>
+@font-face {
+  font-family: "Galiver";
+  src: url("/src/css/galiver.ttf");
+}
+
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: Galiver, Arial, sans-serif;
+}
+
+#widget {
+  width: 320px;
+  height: 200px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(247,93,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#speed {
+  font-size: 92px;
+  font-weight: bold;
+  color: #f75d00;
+  text-shadow: 0 0 20px black;
+  line-height: 1;
+}
+
+#unit {
+  margin-top: 10px;
+  font-size: 22px;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 2px;
+}
+
+#status {
+  margin-top: 8px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+}
+</style>
+</head>
+
+<body>
+
+<div id="widget">
+  <div id="speed">0</div>
+  <div id="unit">km/h</div>
+  <div id="status">waiting data...</div>
+</div>
+
+<script>
+let speedEl = document.getElementById("speed");
+let statusEl = document.getElementById("status");
+
+let currentSpeed = 0;
+let targetSpeed = 0;
+
+// 🟢 ПЛАВНАЯ АНИМАЦИЯ ЦИФР
+setInterval(() => {
+  currentSpeed += (targetSpeed - currentSpeed) * 0.2;
+  speedEl.textContent = Math.round(currentSpeed);
+}, 30);
+
+// ✅ ПОДКЛЮЧЕНИЕ К WEBSOCKET
+var HOST = location.origin.replace(/^http/, 'ws');
+const socket = new ReconnectingWebSocket(HOST);
+
+// ✅ ИДЕНТИФИКАТОР (если нужен)
+let duid = parseInt((new URL(window.location)).searchParams.get("duid")) || 0;
+
+socket.addEventListener('open', () => {
+  statusEl.textContent = "connected";
+});
+
+// ✅ ПРИЁМ ДАННЫХ
+socket.addEventListener('message', (event) => {
+  try {
+    let data = JSON.parse(event.data);
+
+    if (data.yourId) {
+      socket.send(JSON.stringify({ myId: data.yourId, duid }));
+    }
+
+    // ✅ ТЫ НУЖДАЕШЬСЯ ТОЛЬКО В ЭТОМ
+    if (typeof data.speed === "number") {
+      targetSpeed = data.speed;
+      statusEl.textContent = "live";
+    }
+
+  } catch(e) {
+    console.error(e);
+  }
+});
+
+socket.addEventListener('close', () => {
+  statusEl.textContent = "disconnected";
+});
+</script>
+
+</body>
+</html>

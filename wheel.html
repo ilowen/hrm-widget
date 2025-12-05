@@ -1,115 +1,139 @@
+
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>KS S18 Speed Widget</title>
-
+<title>Wheel Speed</title>
 <script src="../reconnecting-websocket.min.js"></script>
 
 <style>
-@font-face {
-  font-family: "Galiver";
-  src: url("/src/css/galiver.ttf");
-}
-
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background: transparent;
   overflow: hidden;
-  font-family: Galiver, Arial, sans-serif;
 }
 
-#widget {
-  width: 320px;
-  height: 200px;
-  background: rgba(0,0,0,0.6);
-  border-radius: 20px;
-  box-shadow: 0 0 30px rgba(247,93,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+#wrap {
+  width: 300px;
+  height: 300px;
+  position: relative;
 }
 
 #speed {
-  font-size: 92px;
-  font-weight: bold;
-  color: #f75d00;
-  text-shadow: 0 0 20px black;
-  line-height: 1;
+  position: absolute;
+  bottom: 30px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 42px;
+  font-family: Arial, sans-serif;
+  text-shadow: 0 0 10px black;
 }
 
-#unit {
-  margin-top: 10px;
-  font-size: 22px;
-  color: rgba(255,255,255,0.7);
-  letter-spacing: 2px;
-}
-
-#status {
-  margin-top: 8px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.5);
+canvas {
+  width: 300px;
+  height: 300px;
 }
 </style>
 </head>
 
 <body>
-
-<div id="widget">
+<div id="wrap">
+  <canvas id="gauge" width="300" height="300"></canvas>
   <div id="speed">0</div>
-  <div id="unit">km/h</div>
-  <div id="status">waiting data...</div>
 </div>
 
 <script>
-let speedEl = document.getElementById("speed");
-let statusEl = document.getElementById("status");
+const canvas = document.getElementById("gauge");
+const ctx = canvas.getContext("2d");
+const speedText = document.getElementById("speed");
 
-let currentSpeed = 0;
-let targetSpeed = 0;
+let speed = 0;
+const MAX_SPEED = 50;
 
-// 🟢 ПЛАВНАЯ АНИМАЦИЯ ЦИФР
-setInterval(() => {
-  currentSpeed += (targetSpeed - currentSpeed) * 0.2;
-  speedEl.textContent = Math.round(currentSpeed);
-}, 30);
+// ===== РИСОВАНИЕ СПИДОМЕТРА =====
+function drawGauge() {
+  ctx.clearRect(0,0,300,300);
 
-// ✅ ПОДКЛЮЧЕНИЕ К WEBSOCKET
-var HOST = location.origin.replace(/^http/, 'ws');
-const socket = new ReconnectingWebSocket(HOST);
+  const cx = 150;
+  const cy = 150;
+  const r = 120;
 
-// ✅ ИДЕНТИФИКАТОР (если нужен)
-let duid = parseInt((new URL(window.location)).searchParams.get("duid")) || 0;
+  // Фон
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
+  ctx.fillStyle = "#111";
+  ctx.fill();
 
-socket.addEventListener('open', () => {
-  statusEl.textContent = "connected";
-});
+  // Шкала
+  for (let i = 0; i <= 50; i += 5) {
+    const angle = Math.PI * (1 + i / MAX_SPEED);
+    const x1 = cx + Math.cos(angle) * (r - 10);
+    const y1 = cy + Math.sin(angle) * (r - 10);
+    const x2 = cx + Math.cos(angle) * r;
+    const y2 = cy + Math.sin(angle) * r;
 
-// ✅ ПРИЁМ ДАННЫХ
-socket.addEventListener('message', (event) => {
-  try {
-    let data = JSON.parse(event.data);
-
-    if (data.yourId) {
-      socket.send(JSON.stringify({ myId: data.yourId, duid }));
-    }
-
-    // ✅ ТЫ НУЖДАЕШЬСЯ ТОЛЬКО В ЭТОМ
-    if (typeof data.speed === "number") {
-      targetSpeed = data.speed;
-      statusEl.textContent = "live";
-    }
-
-  } catch(e) {
-    console.error(e);
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
+
+  // Стрелка
+  const a = Math.PI * (1 + speed / MAX_SPEED);
+  const nx = cx + Math.cos(a) * (r - 30);
+  const ny = cy + Math.sin(a) * (r - 30);
+
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(nx,ny);
+  ctx.strokeStyle = speed > 35 ? "red" : "lime";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Центр
+  ctx.beginPath();
+  ctx.arc(cx,cy,6,0,Math.PI*2);
+  ctx.fillStyle = "white";
+  ctx.fill();
+}
+
+function updateSpeed(val){
+  speed = Math.max(0, Math.min(MAX_SPEED, val));
+  speedText.innerText = speed.toFixed(1);
+  drawGauge();
+}
+
+// ===== WEBSOCKET =====
+let duid = Number(new URLSearchParams(location.search).get("duid")) || 0;
+let HOST = location.origin.replace(/^http/, 'ws');
+let socket = new ReconnectingWebSocket(HOST);
+
+socket.addEventListener("open", () => {
+  console.log("WS connected");
 });
 
-socket.addEventListener('close', () => {
-  statusEl.textContent = "disconnected";
+socket.addEventListener("message", (event) => {
+  try {
+    const data = JSON.parse(event.data);
+
+    if (data.yourId)
+      socket.send(JSON.stringify({ myId: data.yourId, duid }));
+
+    if (typeof data.speed === "number") {
+      updateSpeed(data.speed);
+    }
+
+  } catch(e){}
 });
+
+// старт
+drawGauge();
 </script>
-
 </body>
 </html>
+

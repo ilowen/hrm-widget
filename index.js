@@ -4,7 +4,7 @@ const WebSocket = require('ws')
 
 const PORT = process.env.PORT || 8080;
 const INDEX = '/index.html';
-
+const WHEEL = '/wheel.html';
 const port = process.env.PORT || 8080
 const app = express()
 const httpServer = http.createServer(app)
@@ -12,6 +12,7 @@ const httpServer = http.createServer(app)
 app.use(express.static(__dirname));
 
 app.use("/", (req, res) => res.sendFile(INDEX, { root: __dirname }));
+app.use("/wheel", (req, res) => res.sendFile(INDEX, { root: __dirname }));
 
 CLIENTS = [];
 WIDGETS = {};
@@ -62,5 +63,6 @@ wss.on('connection', function connection(ws) {
        console.log("Disconnected",data);
    });
 });
+
 
 

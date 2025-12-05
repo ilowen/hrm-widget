@@ -12,7 +12,7 @@ const httpServer = http.createServer(app)
 app.use(express.static(__dirname));
 
 app.use("/", (req, res) => res.sendFile(INDEX, { root: __dirname }));
-app.use("/wheel", (req, res) => res.sendFile(WHEEL, { root: __dirname }));
+app.get("/wheel", (req, res) => res.sendFile(WHEEL, { root: __dirname }));
 
 CLIENTS = [];
 WIDGETS = {};
@@ -63,6 +63,7 @@ wss.on('connection', function connection(ws) {
        console.log("Disconnected",data);
    });
 });
+
 
 
 

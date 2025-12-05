@@ -19,7 +19,8 @@ connectionIDCounter = 0;
 
 
 const wss = new WebSocket.Server({
-    'server': httpServer
+    'server': httpServer,
+     'path': '/ws'
 })
 httpServer.listen(port);
 
@@ -62,3 +63,4 @@ wss.on('connection', function connection(ws) {
        console.log("Disconnected",data);
    });
 });
+

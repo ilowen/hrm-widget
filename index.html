@@ -408,6 +408,7 @@
             });
 
             // Listen for messages
+               let audio=parseInt((new URL(window.location)).searchParams.get("audio"))||0;
             socket.addEventListener('message',async function (event) {
               //"{\"pedometer\":{\"stepStatus\":\"NOT_MOVING\",\"cumulativeTotalStepCount\":52},\"timestamp\":1617797909827}"
               //console.log('Message from server ', event.data);
@@ -425,7 +426,8 @@
                       activeScene.data.children.stepStatus.content =(data.pedometer.stepStatus=="WALKING"?"🚶":"🏃")+data.pedometer.cumulativeTotalStepCount;
                     }
                 };
-                if (data.heart&audio){
+               
+                if (data.heart){
                   beat=data.heart.interval;
                   rate=data.heart.rate;
                   rate=rate<=0?60:rate;
@@ -441,7 +443,7 @@
             });
             activeScene.data.children.Rate.fontFamily= 'Arial';
             //AUDIO
-            let audio=parseInt((new URL(window.location)).searchParams.get("audio"))||0;
+       
             var audiohbeat = new Howl({
               src: ['HB60.mp3'],
               autoplay: true,
@@ -521,5 +523,6 @@
     <div style='display:none;'  id = "auctionView"></div>
 </body>
 </html>
+
 
 

@@ -455,10 +455,12 @@
               //🧍‍♂️🚶🦶
             //x.setAttribute("controls", "controls");
           //  document.body.appendChild(x);
+        let audio=(new URL(window.location)).searchParams.get("audio")||0;
+              
           function sigmoid(z) {
             return 1 / (1 + Math.exp(-z));
           }
-            while(1){
+            while(audio){
               //scale=rate/600;
               //scale=sigmoid(60/rate)/0.7310585786300049||1;
               //console.log(scale,rate);
@@ -518,3 +520,4 @@
     <div style='display:none;'  id = "auctionView"></div>
 </body>
 </html>
+

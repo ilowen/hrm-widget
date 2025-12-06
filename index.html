@@ -425,11 +425,11 @@
                       activeScene.data.children.stepStatus.content =(data.pedometer.stepStatus=="WALKING"?"🚶":"🏃")+data.pedometer.cumulativeTotalStepCount;
                     }
                 };
-                if (data.heart){
+                if (data.heart&audio){
                   beat=data.heart.interval;
                   rate=data.heart.rate;
                   rate=rate<=0?60:rate;
-                  audiohbeat.volume(rate/220||0);
+                  audiohbeat.volume((audio/100)*rate/220||0);
                   audiohbeat.rate(rate/60||1);
                   activeScene.data.children.Rate.content=rate;
                 };
@@ -441,6 +441,7 @@
             });
             activeScene.data.children.Rate.fontFamily= 'Arial';
             //AUDIO
+            let audio=parseInt((new URL(window.location)).searchParams.get("audio"))||0;
             var audiohbeat = new Howl({
               src: ['HB60.mp3'],
               autoplay: true,
@@ -455,12 +456,12 @@
               //🧍‍♂️🚶🦶
             //x.setAttribute("controls", "controls");
           //  document.body.appendChild(x);
-        let audio=(new URL(window.location)).searchParams.get("audio")||0;
+       
               
           function sigmoid(z) {
             return 1 / (1 + Math.exp(-z));
           }
-            while(audio){
+            while(1){
               //scale=rate/600;
               //scale=sigmoid(60/rate)/0.7310585786300049||1;
               //console.log(scale,rate);
@@ -520,4 +521,5 @@
     <div style='display:none;'  id = "auctionView"></div>
 </body>
 </html>
+
 
